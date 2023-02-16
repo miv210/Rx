@@ -140,5 +140,38 @@ namespace dbFirst.Services
                 demoContext.SaveChanges();
             }
         }
+
+        public void UpdateAircraft (string name)
+        {
+            using(demoContext = new DemoContext())
+            {
+                var aircraft = demoContext.Aircrafts.FirstOrDefault(p=> p.Model == name);
+                if (aircraft != null)
+                {
+                    aircraft.Range = 8100;
+                    demoContext.Aircrafts.Update(aircraft);
+                    demoContext.SaveChanges();
+                }
+            }
+        }
+
+        public void SetStatus (string statusName)
+        {
+            using(demoContext = new DemoContext())
+            {
+                var flights = demoContext.Flights.
+                    Include(p => p.DepartureAirportNavigation.AirportName == "Домодедово" && p.DepartureAirportNavigation.City == "Москва").
+                    Where(p => p.Status == "Delayed").ToList();
+                foreach(var flight in flights) 
+                {
+                    if (flight != null)
+                    {
+                        flight.Status= statusName;
+                        demoContext.Flights.Update(flight);
+                        demoContext.SaveChanges();
+                    }
+                }
+            }
+        }
     }
 }
