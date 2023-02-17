@@ -1,6 +1,8 @@
 ﻿using dbFirst.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Immutable;
 
 namespace dbFirst.Services
 {
@@ -8,7 +10,7 @@ namespace dbFirst.Services
     {
         DemoContext demoContext;
 
-        public async Task<int> GetCountAirport()
+        public int GetCountAirport()
         {
             using(demoContext = new DemoContext())
             {
@@ -17,7 +19,7 @@ namespace dbFirst.Services
             }
         }
 
-        public async Task<AirportCrowded> GetCrowdedAirport()
+        public AirportCrowded GetCrowdedAirport()
         {
             using(demoContext = new DemoContext())
             {
@@ -57,11 +59,14 @@ namespace dbFirst.Services
             }
         }
 
-        public async Task<int> GetCountTicketAirport(string id)
+        public int GetCountTicketAirport(string id)
         {
-            using(demoContext = new DemoContext())
+            using (demoContext = new DemoContext())
             {
-                var ds = demoContext.Tickets.Include(p=> p.TicketFlights).ThenInclude(p=> p.Flight.DepartureAirport == id).Count();
+                var ds = demoContext.Flights
+                    .Include(p=> p.TicketFlights)
+                    .ThenInclude(p=> p.TicketNoNavigation)
+                    .Where(p=> p.DepartureAirport == id).SelectMany(p=> p.TicketFlights).Where(p=> p.TicketNoNavigation != null).Count();
                 return ds;
             }
         }
@@ -171,6 +176,33 @@ namespace dbFirst.Services
                         demoContext.SaveChanges();
                     }
                 }
+            }
+        }
+
+        public List<PassengFl4> SerchName ()
+        {
+            using(demoContext = new DemoContext())
+            {
+                var passengers = demoContext.Tickets.GroupBy(p=> p.PassengerName).
+                    Select(p => new PassengFl4 { Name = p.Key, ContFlight = p.Count ()}).
+                    Where(p=> p.ContFlight > 3).ToList();
+                return passengers;
+            }
+        }
+
+        public List <CountFli> CountFlights()
+        {
+            using(demoContext = new DemoContext())
+            {
+                var countFligts = (from p in demoContext.Flights 
+                                  join c in demoContext.Aircrafts on p.AircraftCode equals c.AircraftCode 
+                                  where c.Range > 7500 
+                                  group p by p.DepartureAirport into g
+                                  select new CountFli {
+                                    AirportCode = g.Key,
+                                    CountFlight= g.Count()
+                                  } ).OrderByDescending(f=> f.CountFlight).ToList();
+                return countFligts;
             }
         }
     }
