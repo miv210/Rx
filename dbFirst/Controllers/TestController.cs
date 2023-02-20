@@ -4,18 +4,35 @@ using dbFirst.Models;
 
 namespace dbFirst.Controllers
 {
+    /// <summary>
+    /// Тест контроллер
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class TestController : Controller
     {
         dbWorker db = new dbWorker();
 
+        /// <summary>
+        /// Возвращает количество аэропортов
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("airport/count")]
-        public async Task<ActionResult<int>> GetCountAirport()
+        public async Task<ActionResult> GetCountAirport()
         {
             var countAirport =  db.GetCountAirport();
-            return countAirport;
+            var result = new Dictionary<string, int>
+            {
+                { "Count", countAirport }
+            };
+
+            return new JsonResult( result);
         }
+        /// <summary>
+        /// Добавление аэропорта
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         [HttpPost("airport/{name}")]
         public async Task<ActionResult> AddAirport(string name)
         {
@@ -23,7 +40,11 @@ namespace dbFirst.Controllers
             return new OkResult();
         }
 
-
+        /// <summary>
+        /// Возвращает количество купленных билетов в аэропорту
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("ticket/count/airport/{id:minlength(3)}")]
         public async Task<ActionResult<int>> GetCountTicketAirport(string id)
         {
@@ -55,7 +76,8 @@ namespace dbFirst.Controllers
         public async Task<ActionResult<IEnumerable<CountFli>>> CountFlights()
         {
             var counFl = db.CountFlights();
-
+            ReportService rep = new ReportService();
+            rep.Create(counFl);
             return counFl;
         }
 
